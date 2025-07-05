@@ -7,10 +7,23 @@ By convention, every eval name should start with {base_eval}.{split}.
 import copy
 import difflib
 import functools
+import importlib
 import logging
 import os
 import re
 from functools import cached_property
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - type checking
+    _OpenAIError = Exception
+else:  # pragma: no cover - runtime fallback for old openai
+    try:
+        _err_mod = importlib.import_module("openai.error")
+        _OpenAIError = getattr(_err_mod, "OpenAIError")
+    except Exception:
+        import openai
+
+        _OpenAIError = getattr(openai, "OpenAIError")
 from pathlib import Path
 from typing import Any, Iterator, Optional, Sequence, Type, TypeVar, Union
 
@@ -96,7 +109,7 @@ class Registry:
     def api_model_ids(self) -> list[str]:
         try:
             return [m["id"] for m in openai.Model.list()["data"]]
-        except openai.error.OpenAIError as err:  # type: ignore
+        except _OpenAIError as err:  # pragma: no cover - network or auth issues
             # Errors can happen when running eval with completion function that uses custom
             # API endpoints and authentication mechanisms.
             logger.warning(f"Could not fetch API model IDs from OpenAI API: {err}")
