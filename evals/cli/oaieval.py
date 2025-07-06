@@ -1,6 +1,7 @@
 """
 This file defines the `oaieval` CLI for running evals.
 """
+
 import argparse
 import logging
 import shlex
@@ -84,7 +85,7 @@ def run(args: OaiEvalArguments, registry: Optional[Registry] = None) -> str:
 
     registry = registry or Registry()
     if args.registry_path:
-        registry.add_registry_paths(args.registry_path)
+        registry.add_registry_paths([args.registry_path])
 
     eval_spec = registry.get_eval(args.eval)
     assert (
@@ -191,8 +192,8 @@ def main() -> None:
     logging.getLogger("openai").setLevel(logging.WARN)
 
     # TODO)) why do we need this?
-    if hasattr(openai.error, "set_display_cause"):  # type: ignore
-        openai.error.set_display_cause()  # type: ignore
+    if getattr(openai, "error", None) and hasattr(openai.error, "set_display_cause"):  # type: ignore[attr-defined]
+        openai.error.set_display_cause()  # type: ignore[attr-defined]
     run(args)
 
 
